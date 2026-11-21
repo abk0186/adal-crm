@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f3d2e">
+<title>Заявка — мини-погрузчик ADAL MODEL 907</title>
+<meta name="description" content="Оставьте заявку на мини-погрузчик ADAL MODEL 907 — мы перезвоним.">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+:root{--g:#0f3d2e;--acc:#f2a900;--bg:#f3f5f4;--tx:#1b2420;--mu:#6b7a73;--bd:#dfe5e2;--red:#d93025}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:440px;margin:0 auto;padding:calc(28px + env(safe-area-inset-top,0px)) 20px calc(30px + env(safe-area-inset-bottom,0px))}
+.logo{font-weight:800;font-size:26px;letter-spacing:.5px;color:var(--g)}.logo span{color:var(--acc)}
+h1{font-size:22px;line-height:1.25;margin:14px 0 6px}
+.lead{color:var(--mu);margin:0 0 18px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:18px}
+label{display:block;font-size:14px;color:var(--mu);margin:0 0 12px}
+input,textarea{font:inherit;font-size:16px;width:100%;margin-top:5px;padding:12px;border:1px solid var(--bd);border-radius:10px;background:#fff;color:var(--tx)}
+input:focus,textarea:focus{outline:2px solid #17694c33;border-color:#17694c}
+textarea{resize:vertical;min-height:84px}
+.btn{width:100%;border:0;border-radius:10px;padding:14px;font:inherit;font-size:17px;font-weight:600;background:var(--g);color:#fff;cursor:pointer}
+.btn[disabled]{opacity:.6}
+.err{color:var(--red);font-size:14px;min-height:1.2em;margin:8px 0 0}
+.small{font-size:12px;color:var(--mu);margin:12px 0 0}
+.hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
+.ok{text-align:center;padding:30px 18px}
+.ok .big{font-size:46px;line-height:1}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="logo">ADAL <span>907</span></div>
+  <section id="formBox">
+    <h1>Мини-погрузчик ADAL MODEL 907</h1>
+    <p class="lead">Оставьте имя и телефон — мы перезвоним и ответим на вопросы.</p>
+    <form id="f" class="card" novalidate autocomplete="on">
+      <label>Имя<input id="name" name="name" autocomplete="name" maxlength="80" required></label>
+      <label>Телефон<input id="phone" name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 700 000 00 00" maxlength="20" required></label>
+      <label>Комментарий (необязательно)<textarea id="comment" name="comment" maxlength="1000" placeholder="Например: для чего нужна техника, город"></textarea></label>
+      <div class="hp" aria-hidden="true"><label>Не заполняйте это поле<input id="website" name="website" tabindex="-1" autocomplete="off"></label></div>
+      <button class="btn" id="send" type="submit">Отправить заявку</button>
+      <p class="err" id="err" role="alert"></p>
+      <p class="small">Нажимая «Отправить», вы соглашаетесь, что мы свяжемся с вами по этому номеру.</p>
+    </form>
+  </section>
+  <section id="okBox" class="card ok hidden">
+    <div class="big">✅</div>
+    <h1>Спасибо!</h1>
+    <p class="lead">Заявка принята, мы перезвоним.</p>
+  </section>
+</main>
+<script src="config.js?v=2"></script>
+<script>
+(function(){
+  var t0 = Date.now();
+  var cfg = window.CRM_CONFIG || {};
+  var p = new URLSearchParams(location.search);
+  var s = (p.get('src') || '').toLowerCase();
+  var src = (s === 'instagram' || s === 'tiktok') ? s : 'site';
+  var $ = function(id){ return document.getElementById(id); };
+
+  // Нормализация к +7XXXXXXXXXX (как crm.normalize_phone в БД)
+  function normPhone(v){
+    var d = String(v || '').replace(/\D/g, '');
+    if (d.length === 11 && (d[0] === '7' || d[0] === '8')) d = d.slice(1);
+    if (d.length !== 10) return null;
+    if (/^(\d)\1{9}$/.test(d) || /^[012]/.test(d)) return null;
+    return '+7' + d;
+  }
+  function err(msg){ $('err').textContent = msg || ''; }
+
+  var MSG = {
+    invalid_name: 'Укажите имя (от 2 символов).',
+    invalid_phone: 'Проверьте номер телефона: нужен формат +7 XXX XXX XX XX.',
+    invalid_comment: 'Комментарий слишком длинный (до 1000 символов).',
+    too_many: 'Сейчас много заявок. Пожалуйста, попробуйте через час или напишите нам в WhatsApp: +7 700 333 09 99.'
+  };
+
+  $('f').addEventListener('submit', function(e){
+    e.preventDefault(); err('');
+    var name = $('name').value.trim();
+    var phone = normPhone($('phone').value);
+    var comment = $('comment').value.trim();
+    if (name.length < 2) { err(MSG.invalid_name); $('name').focus(); return; }
+    if (!phone) { err(MSG.invalid_phone); $('phone').focus(); return; }
+    if (comment.length > 1000) { err(MSG.invalid_comment); return; }
+    var btn = $('send'); btn.disabled = true; btn.textContent = 'Отправляем…';
+    fetch(cfg.SUPABASE_URL + '/rest/v1/rpc/crm_public_lead', {
+      method: 'POST',
+      headers: { 'apikey': cfg.SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_name: name, p_phone: phone, p_comment: comment || null, p_src: src,
+                             p_hp: $('website').value, p_elapsed_ms: Date.now() - t0 })
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(j){
+        if (r.ok && j && j.ok) { $('formBox').classList.add('hidden'); $('okBox').classList.remove('hidden'); window.scrollTo(0,0); return; }
+        var e2 = new Error(MSG[(j && j.message) || ''] || 'Не получилось отправить. Попробуйте ещё раз или напишите нам в WhatsApp: +7 700 333 09 99.');
+        e2.server = true; throw e2;
+      });
+    }).catch(function(ex){
+      err(ex && ex.server ? ex.message : 'Нет связи. Проверьте интернет и попробуйте ещё раз.');
+      btn.disabled = false; btn.textContent = 'Отправить заявку';
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -11,7 +11,7 @@ const sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY, { auth: { persi
 
 const STAGES = ['Новая заявка','Связались','Квалификация','КП отправлено','Счёт/договор','Оплата','Отгрузка','Успешно','Отказ'];
 const CLOSED = ['Успешно','Отказ'];
-const SOURCES = ['Реклама-звонок','WhatsApp','SMS','Сайт','Рекомендация','Другое'];
+const SOURCES = ['Реклама-звонок','WhatsApp','SMS','Сайт','Instagram','TikTok','Рекомендация','Другое'];
 const TOUCH = { call:'📞 Звонок', whatsapp:'💬 WhatsApp', sms:'✉️ SMS', meeting:'🤝 Встреча', note:'📝 Заметка', system:'⚙️ Система' };
 
 const S = { user:null, team:[], dirs:[], deals:[], tasks:[], dir: localStorage.getItem('crm_dir') || '1', view:'Board', taskScope:'mine', openDeal:null };
