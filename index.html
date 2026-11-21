@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f3d2e">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ADAL CRM">
+<title>ADAL CRM</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<div id="app">
+  <section id="login" class="screen hidden">
+    <div class="login-box">
+      <div class="logo">ADAL <span>CRM</span></div>
+      <p class="muted">Продажи мини-погрузчиков ADAL MODEL 907</p>
+      <form id="loginForm">
+        <label>Email<input type="email" id="loginEmail" autocomplete="username" required></label>
+        <label>Пароль<input type="password" id="loginPass" autocomplete="current-password" required></label>
+        <button class="btn primary big" type="submit">Войти</button>
+        <p id="loginErr" class="err"></p>
+      </form>
+      <p class="muted small">Доступ только для команды. Аккаунт выдаёт администратор.</p>
+    </div>
+  </section>
+
+  <section id="noaccess" class="screen hidden">
+    <div class="login-box">
+      <div class="logo">ADAL <span>CRM</span></div>
+      <p>Ваш аккаунт <b id="naEmail"></b> ещё не добавлен в команду CRM.</p>
+      <p class="muted">Попросите администратора добавить вас.</p>
+      <button class="btn" data-act="logout">Выйти</button>
+    </div>
+  </section>
+
+  <section id="main" class="screen hidden">
+    <header class="topbar">
+      <div class="logo sm">ADAL <span>CRM</span></div>
+      <select id="dirFilter" aria-label="Направление"></select>
+      <button class="icon-btn" data-act="refresh" title="Обновить">⟳</button>
+      <button class="icon-btn" data-act="logout" title="Выйти">⎋</button>
+    </header>
+
+    <div id="viewBoard" class="view">
+      <div id="board" class="board"></div>
+    </div>
+
+    <div id="viewList" class="view hidden">
+      <div class="searchbar">
+        <input id="search" type="search" placeholder="Поиск по имени или телефону" autocomplete="off">
+        <label class="chk"><input type="checkbox" id="showClosed"> закрытые</label>
+      </div>
+      <div id="list" class="list"></div>
+    </div>
+
+    <div id="viewTasks" class="view hidden">
+      <div class="seg">
+        <button class="seg-btn active" data-taskscope="mine">Мои задачи</button>
+        <button class="seg-btn" data-taskscope="all">Все</button>
+        <button class="seg-btn" data-taskscope="done">Выполненные</button>
+      </div>
+      <div id="tasks" class="list"></div>
+    </div>
+
+    <button id="fab" class="fab" data-act="newLead">＋ Лид</button>
+
+    <nav class="tabbar">
+      <button class="tab active" data-view="Board"><span>▦</span>Воронка</button>
+      <button class="tab" data-view="List"><span>☰</span>Список</button>
+      <button class="tab" data-view="Tasks"><span>✓</span>Задачи <b id="taskBadge" class="badge hidden"></b></button>
+    </nav>
+  </section>
+</div>
+
+<!-- Новый лид -->
+<div id="leadSheet" class="sheet hidden" role="dialog" aria-modal="true">
+  <div class="sheet-body">
+    <div class="sheet-head"><h2>Новый лид</h2><button class="icon-btn" data-close>✕</button></div>
+    <form id="leadForm">
+      <label>Телефон *<input id="leadPhone" type="tel" inputmode="tel" placeholder="8 700 000 00 00" required autocomplete="off"></label>
+      <div id="leadHint" class="hint hidden"></div>
+      <label>Имя<input id="leadName" autocomplete="off"></label>
+      <div class="row2">
+        <label>Источник<select id="leadSource"></select></label>
+        <label>Город<input id="leadCity" autocomplete="off"></label>
+      </div>
+      <label>Направление<select id="leadDir"></select></label>
+      <label>Комментарий / что спросил<textarea id="leadText" rows="2"></textarea></label>
+      <button class="btn primary big" type="submit" id="leadSubmit">Сохранить лид</button>
+      <p id="leadErr" class="err"></p>
+    </form>
+  </div>
+</div>
+
+<!-- Карточка сделки -->
+<div id="dealSheet" class="sheet hidden" role="dialog" aria-modal="true">
+  <div class="sheet-body wide" id="dealBody"></div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="vendor/supabase.js"></script>
+<script src="config.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>
