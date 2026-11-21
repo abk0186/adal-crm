@@ -1,6 +1,13 @@
 'use strict';
 const C = window.CRM_CONFIG;
-const sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+// Ссылка из письма (подтверждение регистрации / сброс пароля) приходит с параметрами в #hash — читаем до инициализации клиента
+const AUTH_HASH = new URLSearchParams(location.hash.replace(/^#/, ''));
+const AUTH_QUERY = new URLSearchParams(location.search);
+const AUTH_LINK_TYPE = AUTH_HASH.get('type') || AUTH_QUERY.get('type');   // signup | recovery | invite | magiclink | email_change
+const AUTH_LINK_ERROR = AUTH_HASH.get('error_description') || AUTH_QUERY.get('error_description');
+const REDIRECT_URL = location.origin + location.pathname;
+let needSetPassword = ['signup','recovery','invite','magiclink'].includes(AUTH_LINK_TYPE);
+const sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' } });
 
 const STAGES = ['Новая заявка','Связались','Квалификация','КП отправлено','Счёт/договор','Оплата','Отгрузка','Успешно','Отказ'];
 const CLOSED = ['Успешно','Отказ'];
@@ -42,8 +49,14 @@ const teamName = id => { const m = S.team.find(x=>x.user_id===id); return m ? (m
 // ---------- Auth ----------
 async function boot(){
   const { data:{ session } } = await sb.auth.getSession();
-  if (!session) return showScreen('login');
+  if (AUTH_LINK_TYPE || AUTH_LINK_ERROR) history.replaceState(null, '', REDIRECT_URL);
+  if (!session) {
+    showScreen('login');
+    if (AUTH_LINK_ERROR) { const m = $('#loginMsg'); m.textContent = 'Ссылка из письма недействительна или устарела. Нажмите «Первый вход / Забыли пароль?» и запросите новую.'; show(m); }
+    return;
+  }
   S.user = session.user;
+  if (needSetPassword) { $('#spEmail').textContent = S.user.email; return showScreen('setpw'); }
   try {
     S.team = await q(sb.from('crm_team').select('*'));
   } catch(e){ S.team = []; }
@@ -53,13 +66,47 @@ async function boot(){
   showScreen('main');
   await reload();
 }
-function showScreen(id){ ['login','noaccess','main'].forEach(s => show($('#'+s), s===id)); }
+function showScreen(id){ ['login','access','setpw','noaccess','main'].forEach(s => show($('#'+s), s===id)); }
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault(); $('#loginErr').textContent='';
   const { error } = await sb.auth.signInWithPassword({ email: $('#loginEmail').value.trim(), password: $('#loginPass').value });
   if (error) { $('#loginErr').textContent = errMsg(error); return; }
   boot();
 });
+// ---------- Первый вход / сброс пароля ----------
+function randomPass(){ const b = new Uint8Array(24); crypto.getRandomValues(b); return Array.from(b, x => x.toString(16).padStart(2,'0')).join('') + 'Aa1!'; }
+$('#accessForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('#accessErr').textContent = ''; show($('#accessMsg'), false);
+  const email = $('#accessEmail').value.trim().toLowerCase();
+  $('#accessSubmit').disabled = true;
+  try {
+    const { data: st, error } = await sb.rpc('crm_access_status', { p_email: email });
+    if (error) throw error;
+    let r = { error: null };
+    if (st === 'signup') r = await sb.auth.signUp({ email, password: randomPass(), options: { emailRedirectTo: REDIRECT_URL } });
+    else if (st === 'reset') r = await sb.auth.resetPasswordForEmail(email, { redirectTo: REDIRECT_URL });
+    if (r.error) {
+      if (/rate limit|too many|security purposes/i.test(r.error.message)) throw new Error('Письмо уже отправлялось недавно. Подождите и попробуйте позже (до 1 часа).');
+      throw new Error('Не удалось отправить письмо. Попробуйте позже.');
+    }
+    const m = $('#accessMsg');
+    m.innerHTML = `Если <b>${esc(email)}</b> есть в списке команды, на него отправлено письмо со ссылкой. Откройте его на этом устройстве и нажмите ссылку — откроется экран «Задать пароль». Проверьте папку «Спам».`;
+    show(m);
+  } catch(er){ $('#accessErr').textContent = er.message || String(er); }
+  finally { $('#accessSubmit').disabled = false; }
+});
+$('#setpwForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('#spErr').textContent = '';
+  const p1 = $('#spPass1').value, p2 = $('#spPass2').value;
+  if (p1.length < 8) { $('#spErr').textContent = 'Минимум 8 символов'; return; }
+  if (p1 !== p2) { $('#spErr').textContent = 'Пароли не совпадают'; return; }
+  $('#spSubmit').disabled = true;
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  $('#spSubmit').disabled = false;
+  if (error) { $('#spErr').textContent = /different from the old|same/i.test(error.message) ? 'Новый пароль должен отличаться от старого' : /weak|short|characters/i.test(error.message) ? 'Пароль слишком простой, придумайте сложнее' : error.message; return; }
+  needSetPassword = false; toast('Пароль сохранён ✓'); boot();
+});
+
 async function logout(){ await sb.auth.signOut(); S.deals=[]; S.tasks=[]; showScreen('login'); }
 
 // ---------- Data ----------
@@ -324,6 +371,8 @@ document.addEventListener('click', async e => {
   if (t.closest('[data-close]') || t.classList.contains('sheet')) return closeSheets();
   const act = t.closest('[data-act]')?.dataset.act;
   if (act === 'logout') return logout();
+  if (act === 'showAccess') { e.preventDefault(); $('#accessEmail').value = $('#loginEmail').value; show($('#accessMsg'), false); $('#accessErr').textContent=''; return showScreen('access'); }
+  if (act === 'showLogin') { e.preventDefault(); return showScreen('login'); }
   if (act === 'refresh') { await reload(); return toast('Обновлено'); }
   if (act === 'newLead') return openLead();
   const tab = t.closest('[data-view]');
@@ -346,7 +395,10 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user && !$('#main').classList.contains('hidden')) reload(); });
-sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') showScreen('login'); });
+sb.auth.onAuthStateChange((ev, session) => {
+  if (ev === 'SIGNED_OUT') showScreen('login');
+  if (ev === 'PASSWORD_RECOVERY' && session) { needSetPassword = true; $('#spEmail').textContent = session.user.email; showScreen('setpw'); }
+});
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 boot();

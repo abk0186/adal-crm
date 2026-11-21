@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 <div id="app">
@@ -25,8 +25,39 @@
         <label>Пароль<input type="password" id="loginPass" autocomplete="current-password" required></label>
         <button class="btn primary big" type="submit">Войти</button>
         <p id="loginErr" class="err"></p>
+        <div id="loginMsg" class="hint hidden"></div>
       </form>
-      <p class="muted small">Доступ только для команды. Аккаунт выдаёт администратор.</p>
+      <p><a href="#" data-act="showAccess" id="firstLink">Первый вход / Забыли пароль?</a></p>
+      <p class="muted small">Доступ только для команды ADAL.</p>
+    </div>
+  </section>
+
+  <section id="access" class="screen hidden">
+    <div class="login-box">
+      <div class="logo">ADAL <span>CRM</span></div>
+      <h2 class="h2">Первый вход / Забыли пароль?</h2>
+      <p class="muted">Введите рабочий email. Если он есть в списке команды, придёт письмо со ссылкой — по ней вы зададите пароль.</p>
+      <form id="accessForm">
+        <label>Email<input type="email" id="accessEmail" autocomplete="username" required></label>
+        <button class="btn primary big" type="submit" id="accessSubmit">Получить ссылку</button>
+      </form>
+      <div id="accessMsg" class="hint ok hidden"></div>
+      <p id="accessErr" class="err"></p>
+      <p><a href="#" data-act="showLogin">← Назад ко входу</a></p>
+    </div>
+  </section>
+
+  <section id="setpw" class="screen hidden">
+    <div class="login-box">
+      <div class="logo">ADAL <span>CRM</span></div>
+      <h2 class="h2">Задать пароль</h2>
+      <p class="muted">Аккаунт: <b id="spEmail"></b></p>
+      <form id="setpwForm">
+        <label>Новый пароль (минимум 8 символов)<input type="password" id="spPass1" autocomplete="new-password" minlength="8" required></label>
+        <label>Повторите пароль<input type="password" id="spPass2" autocomplete="new-password" minlength="8" required></label>
+        <button class="btn primary big" type="submit" id="spSubmit">Сохранить пароль и войти</button>
+        <p id="spErr" class="err"></p>
+      </form>
     </div>
   </section>
 
@@ -106,7 +137,7 @@
 <div id="toast" class="toast hidden"></div>
 
 <script src="vendor/supabase.js"></script>
-<script src="config.js?v=1"></script>
-<script src="app.js?v=1"></script>
+<script src="config.js?v=2"></script>
+<script src="app.js?v=2"></script>
 </body>
 </html>

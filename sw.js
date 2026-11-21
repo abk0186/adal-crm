@@ -1,6 +1,6 @@
 // Кэш только статики приложения. Запросы к Supabase всегда идут в сеть.
-const CACHE = 'adal-crm-v1';
-const ASSETS = ['./', 'index.html', 'style.css?v=1', 'app.js?v=1', 'config.js?v=1', 'vendor/supabase.js', 'manifest.webmanifest', 'icons/icon-192.png'];
+const CACHE = 'adal-crm-v2';
+const ASSETS = ['./', 'index.html', 'style.css?v=2', 'app.js?v=2', 'config.js?v=2', 'vendor/supabase.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
