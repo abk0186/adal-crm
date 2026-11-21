@@ -92,3 +92,4 @@ label>input,label>select,label>textarea{margin-top:4px;color:var(--tx)}
 
 .h2{font-size:20px;margin:18px 0 6px}
 .login-box a{color:var(--g2)}
+details.box summary{cursor:pointer;margin-bottom:8px}

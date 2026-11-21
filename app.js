@@ -95,6 +95,27 @@ $('#accessForm').addEventListener('submit', async e => {
   } catch(er){ $('#accessErr').textContent = er.message || String(er); }
   finally { $('#accessSubmit').disabled = false; }
 });
+// Запасной путь: вставить ссылку из письма (если редирект уводит на Site URL / localhost)
+async function usePastedLink(){
+  const err = $('#pasteErr'); err.textContent = '';
+  const raw = $('#pasteLink').value.trim();
+  let u; try { u = new URL(raw); } catch { err.textContent = 'Это не похоже на ссылку'; return; }
+  const h = new URLSearchParams(u.hash.replace(/^#/, ''));
+  try {
+    if (h.get('access_token') && h.get('refresh_token')) {
+      const { error } = await sb.auth.setSession({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token') });
+      if (error) throw error;
+    } else {
+      const token_hash = u.searchParams.get('token_hash') || u.searchParams.get('token');
+      const type = u.searchParams.get('type') || 'signup';
+      if (!token_hash) throw new Error('В ссылке нет кода');
+      const { error } = await sb.auth.verifyOtp({ token_hash, type: type === 'signup' ? 'signup' : type });
+      if (error) throw error;
+    }
+    needSetPassword = true; $('#pasteLink').value = ''; boot();
+  } catch(e){ err.textContent = /expired|invalid|not found/i.test(e.message||'') ? 'Ссылка устарела или уже использована. Запросите новое письмо.' : (e.message || String(e)); }
+}
+
 $('#setpwForm').addEventListener('submit', async e => {
   e.preventDefault(); $('#spErr').textContent = '';
   const p1 = $('#spPass1').value, p2 = $('#spPass2').value;
@@ -372,6 +393,7 @@ document.addEventListener('click', async e => {
   const act = t.closest('[data-act]')?.dataset.act;
   if (act === 'logout') return logout();
   if (act === 'showAccess') { e.preventDefault(); $('#accessEmail').value = $('#loginEmail').value; show($('#accessMsg'), false); $('#accessErr').textContent=''; return showScreen('access'); }
+  if (act === 'pasteLink') return usePastedLink();
   if (act === 'showLogin') { e.preventDefault(); return showScreen('login'); }
   if (act === 'refresh') { await reload(); return toast('Обновлено'); }
   if (act === 'newLead') return openLead();
