@@ -87,6 +87,7 @@ $('#accessForm').addEventListener('submit', async e => {
     else if (st === 'reset') r = await sb.auth.resetPasswordForEmail(email, { redirectTo: REDIRECT_URL });
     if (r.error) {
       if (/rate limit|too many|security purposes/i.test(r.error.message)) throw new Error('Письмо уже отправлялось недавно. Подождите и попробуйте позже (до 1 часа).');
+      if (/not authorized|sending|smtp/i.test(r.error.message)) throw new Error('Почта CRM пока не настроена для этого адреса. Сообщите администратору (Асету).');
       throw new Error('Не удалось отправить письмо. Попробуйте позже.');
     }
     const m = $('#accessMsg');

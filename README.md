@@ -38,6 +38,19 @@
 - `crm.ingest_lead(phone, name, source, text)` — для будущей WhatsApp-рутины. Только `service_role` / SQL-админ
   (через REST anon/authenticated недоступна). Та же логика дедупа.
 
+## Первый вход / сброс пароля (самостоятельно)
+На экране входа: «Первый вход / Забыли пароль?» → email → RPC `public.crm_access_status(email)`
+(`signup` | `reset` | `none`) → `auth.signUp` (со случайным паролем, письмо-подтверждение) или
+`auth.resetPasswordForEmail`; для `none` ничего не отправляется. Сообщение всегда одинаковое.
+По ссылке из письма открывается экран «Задать пароль» (`updateUser({password})`).
+Запасной путь: если ссылка ведёт на `localhost:3000` (Site URL проекта), её можно вставить в поле
+«Ссылка из письма не открылась?» — CRM сама проверит код (`verifyOtp` / `setSession`).
+
+Настройки Auth, которые нужны (Dashboard → Authentication → URL Configuration):
+- Redirect URLs: добавить `https://abk0186.github.io/adal-crm/` (Site URL не трогать).
+- Почта: встроенный SMTP Supabase шлёт письма **только членам команды организации Supabase** и ~2 письма/час.
+  Для писем на обычные адреса нужен свой SMTP (например, Gmail SMTP с паролем приложения) — Authentication → Emails → SMTP Settings.
+
 ## Как добавить пользователя (админ)
 1. В SQL editor Supabase (или через MCP):
    ```sql
